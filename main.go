@@ -341,7 +341,7 @@ func main() {
 	r.Use(cors.New(corsConfig))
 	r.POST("/api/create-room", createRoom)
 	r.POST("/api/join-room", joinRoom)
-	r.GET("/api/stream/:room_id/:participant_id", streamRoom)
+	r.GET("/stream/:room_id/:participant_id", streamRoom)
 	r.POST("/api/room/:room_id/:participant_id", transferSDP)
 
 	// r.RunTLS(":8080", "./ssl/meetmesh.crt", "./ssl/meetmesh-encrypt.key")
