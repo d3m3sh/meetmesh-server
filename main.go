@@ -54,10 +54,7 @@ type RequestCreate struct {
 func createRoom(c *gin.Context) {
 	mutex.Lock()
 	defer func() {
-		fmt.Println("create room before unlock")
 		mutex.Unlock()
-		fmt.Println("create room after unlock")
-
 	}()
 
 	var request RequestCreate
@@ -87,10 +84,7 @@ type RequestJoin struct {
 func joinRoom(c *gin.Context) {
 	mutex.Lock()
 	defer func() {
-		fmt.Println("join room before unlock")
 		mutex.Unlock()
-		fmt.Println("join room after unlock")
-
 	}()
 
 	var request RequestJoin
@@ -129,20 +123,13 @@ func streamRoom(c *gin.Context) {
 	c.Header("Content-Type", "text/event-stream")
 	c.Header("Cache-Control", "no-cache")
 	c.Header("Connection", "keep-alive")
-	fmt.Println("after mutext lock")
 
 	mutex.Lock()
-	fmt.Println("before mutext lock")
-
-	fmt.Println("stream debug 0")
-
 	room, exists := rooms[roomID]
 
 	if !exists {
 		c.JSON(http.StatusNotFound, gin.H{"error": "Room not found"})
-		fmt.Println("stream before unlock")
 		mutex.Unlock()
-		fmt.Println("stream after unlock")
 		return
 	}
 
@@ -152,7 +139,6 @@ func streamRoom(c *gin.Context) {
 			member = &m
 		}
 	}
-	fmt.Println("stream debug 1")
 
 	if member == nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid request"})
@@ -194,10 +180,8 @@ func streamRoom(c *gin.Context) {
 	mutex.Unlock()
 
 	c.Stream(func(w io.Writer) bool {
-		fmt.Println("stream debug 3")
-
 		if msg, ok := <-clientChannel; ok {
-			fmt.Println("msg to send with SSE:", msg)
+			fmt.Println("msg to send with SSE:", msg.Type)
 			c.SSEvent(msg.Type, gin.H{
 				"from":    msg.From,
 				"payload": msg.Payload,
@@ -233,7 +217,7 @@ func transferSDP(c *gin.Context) {
 		return
 	}
 
-	fmt.Printf("Received SDP from %s in room %s: %v\n", participantID, roomID, request.SDP)
+	fmt.Printf("Received SDP from %s in room %s\n", participantID, roomID)
 
 	var from *Member
 	for _, member := range room.Members {
