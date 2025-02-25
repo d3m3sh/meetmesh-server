@@ -72,7 +72,7 @@ func createRoom(c *gin.Context) {
 	}
 	room.Members = append(room.Members, newMember)
 	fmt.Println(room)
-	c.JSON(http.StatusOK, gin.H{"room": RoomWithActiveMembers(rooms[roomID]), "id": newMember.Id})
+	c.JSON(http.StatusOK, gin.H{"room": rooms[roomID], "id": newMember.Id})
 }
 
 type RequestJoin struct {
@@ -109,7 +109,7 @@ func joinRoom(c *gin.Context) {
 			return
 		}
 		room.Members = append(room.Members, newMember)
-		c.JSON(http.StatusOK, gin.H{"room": RoomWithActiveMembers(room), "id": newMember.Id})
+		c.JSON(http.StatusOK, gin.H{"room": room, "id": newMember.Id})
 	} else {
 		c.JSON(http.StatusNotFound, gin.H{"error": "Room not found"})
 	}
