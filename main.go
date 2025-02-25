@@ -255,6 +255,7 @@ func transferSDP(c *gin.Context) {
 				}
 
 			}
+			break;
 		}
 	}
 }
