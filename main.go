@@ -152,6 +152,7 @@ func streamRoom(c *gin.Context) {
 	go func() {
 		defer func() {
 			mutex.Lock()
+			defer mutex.Unlock()
 			fmt.Println("clean client channel to member id:", member.Id)
 
 			close(clientChannel)
@@ -159,8 +160,15 @@ func streamRoom(c *gin.Context) {
 
 			delete(clientChannels, member.Id)
 			fmt.Println("client channel has deleted to member id:", member.Id)
-
-			mutex.Unlock()
+			for _, r := range rooms {
+				for y, m := range r.Members {
+					if m.Id == member.Id {
+						fmt.Println("client %s delete to room %s\n", member.Id, r.Id)
+						r.Members = append(r.Members[:y], r.Members[y+1:]...)
+						return
+					}
+				}
+			}
 		}()
 
 		ticker := time.NewTicker(5 * time.Second)
