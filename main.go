@@ -205,6 +205,11 @@ type RequestSDP struct {
 	From string                    `json:"from"`
 }
 
+type RequestCandidate struct {
+	Candidate  webrtc.ICECandidateInit   `json:"candidate"`
+	From string                    `json:"from"`
+}
+
 func transferSDP(c *gin.Context) {
 	roomID := c.Param("room_id")
 	participantID := c.Param("participant_id")
@@ -252,6 +257,61 @@ func transferSDP(c *gin.Context) {
 					Type:    request.SDP.Type.String(),
 					From:    *from,
 					Payload: request.SDP,
+				}
+
+			}
+			break;
+		}
+	}
+}
+
+func transferCandidate(c *gin.Context) {
+	roomID := c.Param("room_id")
+	participantID := c.Param("participant_id")
+
+	mutex.Lock()
+	defer mutex.Unlock()
+
+	room, exists := rooms[roomID]
+
+	if !exists {
+		c.JSON(http.StatusNotFound, gin.H{"error": "Room not found"})
+		return
+	}
+
+	var request RequestCandidate
+	if err := c.ShouldBindJSON(&request); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid request"})
+		return
+	}
+
+	fmt.Printf("Received Candidate to %s in room %s\n", participantID, roomID)
+
+	var from *Member
+	for _, member := range room.Members {
+		if member.Id == request.From {
+			from = &member
+			break
+		}
+	}
+
+	if from == nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid requester"})
+	}
+
+	c.JSON(http.StatusOK, gin.H{"message": "Candidate received"})
+
+	for _, member := range room.Members {
+		if member.Id == participantID {
+			fmt.Println("member found:", member)
+			clientChannel, exists := clientChannels[member.Id]
+			if exists {
+				fmt.Println("channel found:", member)
+
+				clientChannel <- EventSSE{
+					Type:    "candidate",
+					From:    *from,
+					Payload: request.Candidate,
 				}
 
 			}
@@ -335,7 +395,8 @@ func main() {
 	r.POST("/api/create-room", createRoom)
 	r.POST("/api/join-room", joinRoom)
 	r.GET("/stream/:room_id/:participant_id", streamRoom)
-	r.POST("/api/room/:room_id/:participant_id", transferSDP)
+	r.POST("/api/room/:room_id/:participant_id/sdp", transferSDP)
+	r.POST("/api/room/:room_id/:participant_id/candidate", transferCandidate)
 
 	// r.RunTLS(":8080", "./ssl/meetmesh.crt", "./ssl/meetmesh-encrypt.key")
 	r.Run(":8080")
