@@ -6,7 +6,8 @@ services:
       - 443:443
     restart: always
     volumes:
-      - ./conf/:/etc/nginx/conf.d/templates:ro
+      - ./conf/templates/:/etc/nginx/conf.d/templates:ro
+      - ./conf/static:/etc/nginx/conf.d/static:ro
       - ./certbot/conf/:/etc/nginx/ssl/:ro
       - ./certbot/www:/var/www/certbot:ro
       - ./android:/var/www/android:ro
@@ -14,7 +15,9 @@ services:
     environment:
       - DOMAIN_NAME=${DOMAIN_NAME}
     command: >
-      /bin/sh -c "envsubst '$$DOMAIN_NAME' < /etc/nginx/conf.d/templates/meetmesh.conf > /etc/nginx/conf.d/meetmesh.conf && nginx -g 'daemon off;'"
+      /bin/sh -c "envsubst '$$DOMAIN_NAME' < /etc/nginx/conf.d/templates/meetmesh.conf > /etc/nginx/conf.d/meetmesh.conf \
+      && cp /etc/nginx/conf.d/static/* /etc/nginx/conf.d \
+      && nginx -g 'daemon off;'"
 
   certbot:
     depends_on:
