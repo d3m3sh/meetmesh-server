@@ -41,3 +41,7 @@ services:
     ports:
       - 8080:8080
 
+  stripe:
+    image: stripe-server
+    ports:
+      - 8081:8080
